@@ -189,10 +189,9 @@ public class NeuralNetwork {
         setWeightsForTest();
         checkCurrentWeight();
 
-        double populationError;
         // until population error < criterion
         do {
-
+            double populationError = 0.0;
             double sum = 0.0;
             double[] errorsForOutputNeurons = new double[numOfOutPut];
             for (int k = 0; k < numOfOutPut; k++) {
@@ -224,9 +223,10 @@ public class NeuralNetwork {
                 System.out.println("Current epoches: " + epoch + " population error = " + populationError + "\n");
             }
 
-        } while (this.criterion < populationError && epoch <= 10000);
-        System.out.println("population error = " + populationError);
-
+            if (populationError < criterion) {
+                break;
+            }
+        } while ( epoch <= 10000);
     }
 
     private void processParamFile(String paraFileName) {
