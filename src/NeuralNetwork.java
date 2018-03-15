@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class NeuralNetwork {
@@ -15,26 +16,10 @@ public class NeuralNetwork {
 
     private double[][] firstLayerWeights;
     private double[][] secondLayerWeights;
+    private ArrayList<Neuron> inputLayer = new ArrayList<>();
+    private ArrayList<Neuron> hiddenLayer = new ArrayList<>();
+    private ArrayList<Neuron> outputLayer = new ArrayList<>();
 
-    private class DataSet {
-        private DataSet(String inFileName, String teachFileName) {
-            try {
-                File infile = new File(inFileName);
-                File teachFile = new File(teachFileName);
-                FileReader inFileReader = new FileReader(infile);
-                FileReader teachFileReader = new FileReader(teachFile);
-                BufferedReader inFileBufferReader = new BufferedReader(inFileReader);
-                BufferedReader teachFileBufferReader = new BufferedReader(teachFileReader);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void loadDataSet(String inFileName, String teachFileName) {
-        DataSet dataSet = new DataSet(inFileName, teachFileName);
-    }
 
     private void processParamFile(String paraFileName) {
         try {
@@ -84,6 +69,20 @@ public class NeuralNetwork {
         this.secondLayerWeights =
                 new double[this.numOfHidden][this.numOfOutPut];
 
+        for (int i = 0; i < this.getNumOfInput(); i++) {
+            Neuron neuron = new Neuron(0, i);
+            this.inputLayer.add(neuron);
+        }
+
+        for (int i = 0; i < this.getNumOfHidden(); i++){
+            Neuron neuron = new Neuron(1, i);
+            this.hiddenLayer.add(neuron);
+        }
+
+        for (int i = 0; i < this.getNumOfOutPut(); i++) {
+            Neuron neuron = new Neuron(2, i);
+            this.outputLayer.add(neuron);
+        }
     }
 
     public int getNumOfInput() {
