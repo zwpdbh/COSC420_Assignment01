@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class DataSet {
-    private ArrayList<ArrayList<Integer>> inputRecords = new ArrayList<>();
-    private ArrayList<ArrayList<Integer>> teachRecords = new ArrayList<>();
+    private ArrayList<ArrayList<Double>> inputRecords = new ArrayList<>();
+    private ArrayList<ArrayList<Double>> teachRecords = new ArrayList<>();
 
     public DataSet(String inFileName, String teachFileName) {
         try {
@@ -20,9 +20,9 @@ public class DataSet {
             String inputLine;
             while ((inputLine = inFileBufferReader.readLine()) != null ) {
                 String[] values = inputLine.split("\\s+");
-                ArrayList<Integer> eachRecord = new ArrayList<>();
+                ArrayList<Double> eachRecord = new ArrayList<>();
                 for (String s: values) {
-                    eachRecord.add(Integer.parseInt(s));
+                    eachRecord.add(Double.parseDouble(s));
                 }
                 inputRecords.add(eachRecord);
             }
@@ -30,9 +30,9 @@ public class DataSet {
             String teachLine;
             while ((teachLine = teachFileBufferReader.readLine()) != null) {
                 String[] values = teachLine.split("\\s+");
-                ArrayList<Integer> eachRecord = new ArrayList<>();
+                ArrayList<Double> eachRecord = new ArrayList<>();
                 for (String s: values) {
-                    eachRecord.add(Integer.parseInt(s));
+                    eachRecord.add(Double.parseDouble(s));
                 }
                 teachRecords.add(eachRecord);
             }
@@ -46,19 +46,19 @@ public class DataSet {
         }
     }
 
-    public ArrayList<ArrayList<Integer>> getInputRecords() {
+    public ArrayList<ArrayList<Double>> getInputRecords() {
         return inputRecords;
     }
 
-    public void setInputRecords(ArrayList<ArrayList<Integer>> inputRecords) {
+    public void setInputRecords(ArrayList<ArrayList<Double>> inputRecords) {
         this.inputRecords = inputRecords;
     }
 
-    public ArrayList<ArrayList<Integer>> getTeachRecords() {
+    public ArrayList<ArrayList<Double>> getTeachRecords() {
         return teachRecords;
     }
 
-    public void setTeachRecords(ArrayList<ArrayList<Integer>> teachRecords) {
+    public void setTeachRecords(ArrayList<ArrayList<Double>> teachRecords) {
         this.teachRecords = teachRecords;
     }
 

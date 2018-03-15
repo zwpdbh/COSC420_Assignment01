@@ -1,5 +1,3 @@
-import java.io.*;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -15,5 +13,6 @@ public class Main {
         DataSet dataSet = new DataSet(inFile, teachFile);
         System.out.println(dataSet);
 
+        neuralNetwork.train(dataSet);
     }
 }
