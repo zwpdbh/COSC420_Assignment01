@@ -3,10 +3,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 public class DataSet {
     private ArrayList<ArrayList<Double>> inputRecords = new ArrayList<>();
-    private ArrayList<ArrayList<Double>> teachRecords = new ArrayList<>();
+    private ArrayList<ArrayList<Double>> teachingInputRecords = new ArrayList<>();
 
     public DataSet(String inFileName, String teachFileName) {
         try {
@@ -34,16 +36,22 @@ public class DataSet {
                 for (String s: values) {
                     eachRecord.add(Double.parseDouble(s));
                 }
-                teachRecords.add(eachRecord);
+                teachingInputRecords.add(eachRecord);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        if (inputRecords.size() != teachRecords.size()) {
-            System.err.println("The records in in.txt and the records in teach.txt must be same\n");
+        if (inputRecords.size() != teachingInputRecords.size()) {
+            System.err.println("The records in testIn.txt and the records in testTeach.txt must be same\n");
             System.exit(1);
         }
+    }
+
+    public void shuffle() {
+        long seed = System.nanoTime();
+        Collections.shuffle(inputRecords, new Random(seed));
+        Collections.shuffle(teachingInputRecords, new Random(seed));
     }
 
     public ArrayList<ArrayList<Double>> getInputRecords() {
@@ -54,12 +62,12 @@ public class DataSet {
         this.inputRecords = inputRecords;
     }
 
-    public ArrayList<ArrayList<Double>> getTeachRecords() {
-        return teachRecords;
+    public ArrayList<ArrayList<Double>> getTeachingInputRecords() {
+        return teachingInputRecords;
     }
 
-    public void setTeachRecords(ArrayList<ArrayList<Double>> teachRecords) {
-        this.teachRecords = teachRecords;
+    public void setTeachingInputRecords(ArrayList<ArrayList<Double>> teachingInputRecords) {
+        this.teachingInputRecords = teachingInputRecords;
     }
 
     @Override
@@ -76,7 +84,7 @@ public class DataSet {
             s.append(" | ");
             s.append(inputRecords.get(index - 1));
             s.append(" | ");
-            s.append(teachRecords.get(index - 1));
+            s.append(teachingInputRecords.get(index - 1));
             s.append("\n");
         }
         return s.toString();

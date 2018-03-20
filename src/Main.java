@@ -1,16 +1,21 @@
 public class Main {
 
     public static void main(String[] args) {
-        String paramFile = "/Users/zw/code/Java_Projects/COSC420_Assignment01/src/param.txt";
-        String inFile = "/Users/zw/code/Java_Projects/COSC420_Assignment01/src/in.txt";
-        String teachFile = "/Users/zw/code/Java_Projects/COSC420_Assignment01/src/teach.txt";
 
+        if (args.length != 3) {
+            System.out.println("Please provide param, input and teaching input file + epoches");
+            System.exit(1);
+        }
 
-        NeuralNetwork neuralNetwork =
-                new NeuralNetwork(paramFile);
-        System.out.println(neuralNetwork);
+        String paramFile = args[0];
+        String inFile = args[1];
+        String teachFile = args[2];
+        int epoches = 200000;
 
+        NeuralNetwork neuralNetwork = new NeuralNetwork(paramFile, epoches);
         DataSet dataSet = new DataSet(inFile, teachFile);
+
+        System.out.println(neuralNetwork);
         System.out.println(dataSet);
 
         neuralNetwork.train(dataSet);

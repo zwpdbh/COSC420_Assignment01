@@ -7,28 +7,6 @@ import java.util.Random;
 
 public class NeuralNetwork {
 
-    public class Neuron {
-        // level indicate the level of this neuron in which layer of the neuron network
-        private int level;
-
-        // index indicate the index of this neuron in current layer
-        private int index;
-        private double state = 0.0;
-
-        private Neuron(int level, int index) {
-            this.level = level;
-            this.index = index;
-        }
-
-        public void setState(double state) {
-            this.state = state;
-        }
-
-        public double getState() {
-            return state;
-        }
-    }
-
     private int numOfInput;
     private int numOfHidden;
     private int numOfOutPut;
@@ -44,82 +22,151 @@ public class NeuralNetwork {
     private double[] biasesForHiddenLayer;
     private double[] biasesForOutputLayer;
 
-    private ArrayList<Neuron> inputLayer = new ArrayList<>();
-    private ArrayList<Neuron> hiddenLayer = new ArrayList<>();
-    private ArrayList<Neuron> outputLayer = new ArrayList<>();
+    private ArrayList<Double> inputLayer = new ArrayList<>();
+    private ArrayList<Double> hiddenLayer = new ArrayList<>();
+    private ArrayList<Double> outputLayer = new ArrayList<>();
 
 
-    public void computeForward(DataSet dataSet, int populationIndex) {
-        ArrayList<Double> currentInput = dataSet.getInputRecords().get(populationIndex);
+    public void computeForward(ArrayList<Double> inputs) {
 
         // the first layer's state = input
         for (int i = 0; i < inputLayer.size(); i++) {
-            inputLayer.get(i).setState(currentInput.get(i));
+            inputLayer.set(i, inputs.get(i));
         }
 
 
         // the second/third layer's input = (sum (weight * output of previous layer + bias)) go through activation function
-        for (int i = 0; i < hiddenLayer.size(); i++) {
+        for (int j = 0; j < hiddenLayer.size(); j++) {
             double sum = 0.0;
-
-            for (int j = 0; j < inputLayer.size(); j++) {
-                sum += inputLayer.get(j).getState() * firstLayerWeights[i][j];
+            for (int i = 0; i < inputLayer.size(); i++) {
+                sum += inputLayer.get(i) * firstLayerWeights[j][i];
             }
-            sum += + biasesForHiddenLayer[i];
+            sum += biasesForHiddenLayer[j];
 
-            hiddenLayer.get(i).setState(applyHiddenLayerActivationFunction(sum));
+            hiddenLayer.set(j, applyHiddenLayerActivationFunction(sum));
         }
 
-        for (int i = 0; i < outputLayer.size(); i++) {
-            double sum = 0;
 
+        for (int k = 0; k < outputLayer.size(); k++) {
+            double sum = 0.0;
             for (int j = 0; j < hiddenLayer.size(); j++) {
-                sum += hiddenLayer.get(j).getState() * secondLayerWeights[i][j];
+                sum += hiddenLayer.get(j) * secondLayerWeights[k][j];
             }
-            sum += biasesForOutputLayer[i];
 
-            outputLayer.get(i).setState(applyOutputLayerActivationFunction(sum));
+            sum += biasesForOutputLayer[k];
+
+            outputLayer.set(k, applyOutputLayerActivationFunction(sum));
         }
 
     }
 
-
-    public void computeBackPropagation(double[] errorsForEachPattern) {
+    /**This method is used to do back propagation for a given array of differences between output and teaching input*/
+    private void computeBackPropagation(double[] errorsForEachPattern) {
+//        System.out.println("Back-propagation error = " + errorsForEachPattern[0]);
         // Back propagation of secondLayerWeights
-        double[][] tempSecondLayerWeights = new double[this.numOfOutPut][this.numOfHidden];
+        double[][] savedAdjustedSecondLayerWeights = new double[this.numOfOutPut][this.numOfHidden];
 
+
+        // for the second layer weights
         ArrayList<Double> deltaPKs = new ArrayList<>();
-        for (int k = 0; k < numOfOutPut; k++) {
-            Double oPK = outputLayer.get(k).getState();
-            Double deltaPk = errorsForEachPattern[k] * oPK * (1 - oPK);
-            deltaPKs.add(deltaPk);
+        for (int k = 0; k < outputLayer.size(); k++) {
+            deltaPKs.add(0.0);
+        }
+        for (int k = 0; k < outputLayer.size(); k++) {
+            Double oPK = outputLayer.get(k);
+            Double deltaPk = errorsForEachPattern[k] * oPK * (1.0 - oPK);
+            deltaPKs.set(k, deltaPk);
+
             for (int j = 0; j < numOfHidden; j++) {
-                tempSecondLayerWeights[k][j] = secondLayerWeights[k][j] + (this.learningRate * deltaPk * this.hiddenLayer.get(j).getState());
+                savedAdjustedSecondLayerWeights[k][j] = secondLayerWeights[k][j] + (this.learningRate * deltaPk * this.hiddenLayer.get(j));
             }
-            this.biasesForOutputLayer[k] += (this.learningRate * deltaPk * 1.0);
+            biasesForOutputLayer[k] += (this.learningRate * deltaPk * 1.0);
         }
 
+
+        // for the first layer weights
+
         for (int j = 0; j < numOfHidden; j++) {
-            Double oPJ = hiddenLayer.get(j).getState();
             double sumFromOutPutLayer = 0.0;
+            Double oPJ = hiddenLayer.get(j);
+
             for (int k = 0; k < numOfOutPut; k++) {
                 sumFromOutPutLayer += deltaPKs.get(k) * secondLayerWeights[k][j];
             }
+
             Double deltaPJ = oPJ * (1 - oPJ) * sumFromOutPutLayer;
+
             for (int i = 0; i < numOfInput; i++) {
-                firstLayerWeights[j][i] += (this.learningRate * deltaPJ * this.inputLayer.get(i).getState());
+                firstLayerWeights[j][i] += (this.learningRate * deltaPJ * this.inputLayer.get(i));
             }
             this.biasesForHiddenLayer[j] += (this.learningRate * deltaPJ * 1.0);
         }
 
         // set the weights
-        for (int j = 0; j < this.numOfOutPut; j++) {
-            for (int i = 0; i < this.numOfHidden; i++) {
-                this.secondLayerWeights[j][i] = tempSecondLayerWeights[j][i];
+        for (int k = 0; k < outputLayer.size(); k++) {
+            for (int j = 0; j < hiddenLayer.size(); j++) {
+                secondLayerWeights[k][j] = savedAdjustedSecondLayerWeights[k][j];
             }
         }
 
     }
+
+
+    /**Train the neural network in batch mode*/
+    public void train(DataSet dataSet) {
+        if (this.epoch == 1) {
+            setWeightsForTest();
+        } else {
+            resetWeights(0.1, 0.9);
+        }
+
+
+        int trainning_epoch = 1;
+
+        do {
+            dataSet.shuffle();
+            double populationError = 0.0;
+            double sum = 0.0;
+
+            double[] errorsForOutputNeurons = new double[numOfOutPut];
+            for (int k = 0; k < numOfOutPut; k++) {
+                errorsForOutputNeurons[k] = 0.0;
+            }
+
+            // for each pattern in the batch
+            for (int index = 0; index < dataSet.getInputRecords().size(); index++) {
+                this.computeForward(dataSet.getInputRecords().get(index));
+
+                // for each output neuron
+                for (int k = 0; k < numOfOutPut; k++) {
+                    Double errOutput = dataSet.getTeachingInputRecords().get(index).get(k) - this.outputLayer.get(k);
+                    sum += (errOutput * errOutput);
+                    errorsForOutputNeurons[k] = errOutput;
+                }
+
+                this.computeBackPropagation(errorsForOutputNeurons);
+            }
+
+
+
+            // compute population error;
+            populationError = sum / (numOfOutPut * dataSet.getTeachingInputRecords().size());
+
+            this.epoch--;
+            trainning_epoch++;
+
+            if (trainning_epoch % 100 == 0) {
+//                this.learningRate = this.learningRate - (this.learningRate / 100.0);
+                System.out.println("Current epoches: " + trainning_epoch + " population error = " + populationError + " , learning_rate = " + this.learningRate);
+            }
+
+            if (populationError < criterion) {
+                break;
+            }
+        } while (true);
+    }
+
+
 
     // using sigmoid function
     private double applyHiddenLayerActivationFunction(double sum) {
@@ -132,34 +179,52 @@ public class NeuralNetwork {
     }
 
 
-    public void checkCurrentWeight() {
-        for (int k = 0; k < numOfOutPut; k++) {
-            for (int j = 0; j < numOfHidden; j++) {
-                System.out.println(secondLayerWeights[k][j]);
-            }
-        }
+    public void checkCurrentStatus() {
+        StringBuilder s = new StringBuilder();
+        s.append("|");
+        s.append(inputLayer.get(0));
+        s.append("|");
+        s.append(" == ");
+        s.append(firstLayerWeights[0][0]);
+        s.append(" ==> ");
+        s.append("|");
+        s.append(hiddenLayer.get(0));
+        s.append("|");
+        s.append(" == ");
+        s.append(secondLayerWeights[0][0]);
+        s.append(" ==> ");
+        s.append("|");
+        s.append(outputLayer.get(0));
+        s.append("|");
+        System.out.println(s.toString());
 
-        for (int j = 0; j < numOfHidden; j++) {
-            for (int i = 0; i < numOfInput; i++) {
-                System.out.println(firstLayerWeights[j][i]);
-            }
-        }
+//        for (int k = 0; k < numOfOutPut; k++) {
+//            for (int j = 0; j < numOfHidden; j++) {
+//                System.out.println(secondLayerWeights[k][j]);
+//            }
+//        }
+//
+//        for (int j = 0; j < numOfHidden; j++) {
+//            for (int i = 0; i < numOfInput; i++) {
+//                System.out.println(firstLayerWeights[j][i]);
+//            }
+//        }
     }
 
 
-    private void resetWeights() {
+    private void resetWeights(double min, double max) {
         Random random = new Random();
         for (int k = 0; k < numOfOutPut; k++) {
-            biasesForOutputLayer[k] = ((double) random.nextInt(21) + 1) / 200.0;
+            biasesForOutputLayer[k] =  min + Math.random() * (max - min);;
             for (int j = 0; j < numOfHidden; j++) {
-                secondLayerWeights[k][j] = ((double) random.nextInt(21) + 1) / 200.0;
+                secondLayerWeights[k][j] = min + Math.random() * (max - min);;
             }
         }
 
         for (int j = 0; j < numOfHidden; j++) {
-            biasesForHiddenLayer[j] = ((double) random.nextInt(21) + 1) / 200.0;
+            biasesForHiddenLayer[j] = min + Math.random() * (max - min);;
             for (int i = 0; i < numOfInput; i++) {
-                firstLayerWeights[j][i] = ((double) random.nextInt(21) + 1) / 200.0;
+                firstLayerWeights[j][i] = min + Math.random() * (max - min);;
             }
         }
 
@@ -183,51 +248,6 @@ public class NeuralNetwork {
         firstLayerWeights[1][1] = -1.4;
     }
 
-    /**Train the neural network in batch mode*/
-    public void train(DataSet dataSet) {
-//        resetWeights();
-        setWeightsForTest();
-        checkCurrentWeight();
-
-        // until population error < criterion
-        do {
-            double populationError = 0.0;
-            double sum = 0.0;
-            double[] errorsForOutputNeurons = new double[numOfOutPut];
-            for (int k = 0; k < numOfOutPut; k++) {
-                errorsForOutputNeurons[k] = 0.0;
-            }
-
-            // for each pattern in the batch
-            for (int index = 0; index < dataSet.getInputRecords().size(); index++) {
-                this.computeForward(dataSet, index);
-
-                // for each output neuron
-                for (int k = 0; k < numOfOutPut; k++) {
-                    Double errorOfEachOutput = this.outputLayer.get(k).getState() - dataSet.getTeachRecords().get(index).get(k);
-                    sum += (errorOfEachOutput * errorOfEachOutput);
-                    errorsForOutputNeurons[k] += errorOfEachOutput;
-                }
-
-            }
-            this.computeBackPropagation(errorsForOutputNeurons);
-
-            // compute population error;
-            populationError = sum / (numOfOutPut * dataSet.getTeachRecords().size());
-
-            epoch++;
-
-            if (epoch % 100 == 0) {
-                System.out.println("Current epoches: " + epoch + " population error = " + populationError);
-            } else {
-                System.out.println("Current epoches: " + epoch + " population error = " + populationError + "\n");
-            }
-
-            if (populationError < criterion) {
-                break;
-            }
-        } while ( epoch <= 10000);
-    }
 
     private void processParamFile(String paraFileName) {
         try {
@@ -268,8 +288,9 @@ public class NeuralNetwork {
         }
     }
 
-    public NeuralNetwork(String paraFileName) {
+    public NeuralNetwork(String paraFileName, int epoches) {
         processParamFile(paraFileName);
+        this.epoch = epoches;
 
         // be careful about the convention of index: W_i_j is a weight on
         // a link connecting from neuron j to current neuron i.
@@ -280,18 +301,15 @@ public class NeuralNetwork {
         this.biasesForOutputLayer = new double[this.getNumOfOutPut()];
 
         for (int i = 0; i < this.getNumOfInput(); i++) {
-            Neuron neuron = new Neuron(0, i);
-            this.inputLayer.add(neuron);
+            this.inputLayer.add(0.0);
         }
 
         for (int i = 0; i < this.getNumOfHidden(); i++){
-            Neuron neuron = new Neuron(1, i);
-            this.hiddenLayer.add(neuron);
+            this.hiddenLayer.add(0.0);
         }
 
         for (int i = 0; i < this.getNumOfOutPut(); i++) {
-            Neuron neuron = new Neuron(2, i);
-            this.outputLayer.add(neuron);
+            this.outputLayer.add(0.0);
         }
     }
 
@@ -299,76 +317,26 @@ public class NeuralNetwork {
         return numOfInput;
     }
 
-    public void setNumOfInput(int numOfInput) {
-        this.numOfInput = numOfInput;
-    }
 
     public int getNumOfHidden() {
         return numOfHidden;
     }
 
-    public void setNumOfHidden(int numOfHidden) {
-        this.numOfHidden = numOfHidden;
-    }
 
     public int getNumOfOutPut() {
         return numOfOutPut;
     }
 
-    public void setNumOfOutPut(int numOfOutPut) {
-        this.numOfOutPut = numOfOutPut;
-    }
-
-    public double getLearningRate() {
-        return learningRate;
-    }
-
-    public void setLearningRate(double learningRate) {
-        this.learningRate = learningRate;
-    }
-
-    public double getMomentum() {
-        return momentum;
-    }
-
-    public void setMomentum(double momentum) {
-        this.momentum = momentum;
-    }
-
-    public double getCriterion() {
-        return criterion;
-    }
-
-    public void setCriterion(double criterion) {
-        this.criterion = criterion;
-    }
-
-
-    public double[][] getFirstLayerWeights() {
-        return firstLayerWeights;
-    }
-
-    public void setFirstLayerWeights(double[][] firstLayerWeights) {
-        this.firstLayerWeights = firstLayerWeights;
-    }
-
-    public double[][] getSecondLayerWeights() {
-        return secondLayerWeights;
-    }
-
-    public void setSecondLayerWeights(double[][] secondLayerWeights) {
-        this.secondLayerWeights = secondLayerWeights;
-    }
 
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
         s.append("NeuralNetwork:\n");
-        s.append("numOfInput = ");
+        s.append("num of input neurons = ");
         s.append(numOfInput);
-        s.append("\nnumOfHidden = ");
+        s.append("\nnum of hidden neurons = ");
         s.append(numOfHidden);
-        s.append("\nnumOfOutput = ");
+        s.append("\nnum of output neurons = ");
         s.append(numOfOutPut);
         s.append("\nlearningRate = ");
         s.append(learningRate);
@@ -376,19 +344,6 @@ public class NeuralNetwork {
         s.append(momentum);
         s.append("\ncriterion = ");
         s.append(criterion);
-
-
-//        for (Neuron neuron: inputLayer) {
-//            System.out.println(neuron.getState());
-//        }
-//
-//        for (Neuron neuron: hiddenLayer) {
-//            System.out.println(neuron.getState());
-//        }
-//
-//        for (Neuron neuron: outputLayer) {
-//            System.out.println(neuron.getState());
-//        }
 
         return s.toString();
     }
